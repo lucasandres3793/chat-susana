@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat con Susana</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="chat">
+    <header class="chat__header">
+      <h1>Susana de Musicardi</h1>
+      <p>Esperando la carroza (1985)</p>
+    </header>
+
+    <!-- aria-live: los lectores de pantalla anuncian los mensajes nuevos -->
+    <ol id="messages" class="chat__messages" aria-live="polite"></ol>
+
+    <p id="status" class="chat__status hidden"></p>
+
+    <!-- Sin "required": el motor es quien rechaza el mensaje vacio -->
+    <form id="composer" class="chat__composer">
+      <input id="message-input" type="text" placeholder="Escribile a Susana..." autocomplete="off">
+      <button id="send-btn" type="submit">Enviar</button>
+    </form>
+
+    <!-- Solo para desarrollo: controla el mock y muestra el costo -->
+    <section class="dev-panel">
+      <label>
+        Modo del mock
+        <select id="mock-mode">
+          <option value="ok">Respuesta normal</option>
+          <option value="429-once">429 una vez</option>
+          <option value="429-always">429 siempre</option>
+          <option value="multi">content con varios bloques</option>
+        </select>
+      </label>
+      <p id="usage">Tokens: -</p>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
