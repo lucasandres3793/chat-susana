@@ -1,12 +1,6 @@
 // Motor del chat: historial, payload, pedido, normalizacion y errores.
 // No toca el DOM: cuando algo cambia, avisa a los suscriptores.
-import { SYSTEM_PROMPT } from './systemPrompt.js';
-import { mockFetch } from './mockApi.js';
-
-const MODEL = 'susana-mock';
-const MAX_TOKENS = 200;      // techo de seguridad: el largo lo pide el prompt
-const TEMPERATURE = 0.9;     // variedad sin salirse del personaje
-const MAX_MENSAJES = 20;     // cuantos mensajes del historial viajan por pedido
+import { postChat } from './api.js';
 
 const state = {
   messages: [],       // { role: 'user' | 'assistant', content, truncated? }
@@ -41,30 +35,15 @@ function crearError(code, message) {
   return error;
 }
 
-// Solo viajan los ultimos mensajes. Si el corte deja una respuesta del
-// modelo al principio, se descarta: el historial arranca con el usuario.
-export function trimHistory(messages, max = MAX_MENSAJES) {
-  const recortado = messages.slice(-max);
-  if (recortado[0]?.role === 'assistant') {
-    return recortado.slice(1);
-  }
-  return recortado;
-}
-
-// Arma el request segun el contrato. El map deja solo role y content:
-// campos internos como truncated no viajan.
+// El historial viaja COMPLETO: el modelo no recuerda nada entre pedidos.
+// El map deja solo role y content: campos internos como truncated no viajan.
 export function buildPayload(messages) {
   return {
-    model: MODEL,
-    system: SYSTEM_PROMPT,
-    max_tokens: MAX_TOKENS,
-    temperature: TEMPERATURE,
-    messages: trimHistory(messages).map(({ role, content }) => ({ role, content })),
+    messages: messages.map(({ role, content }) => ({ role, content })),
   };
 }
 
 // content es un array de bloques: se filtran los de texto y se unen.
-// Tolera un string por si el proveedor cambia de forma.
 export function normalizeResponse(body) {
   const content = body?.content;
   let text = '';
@@ -92,17 +71,17 @@ export function normalizeResponse(body) {
 
 // Pide, y ante un 429 espera lo indicado y reintenta UNA sola vez.
 async function requestWithRetry(payload) {
-  let response = await mockFetch(payload);
+  let response = await postChat(payload);
 
   if (response.status === 429) {
     const body = await response.json();
-    const segundos = body.retryAfterSeconds ?? 1;
+    const segundos = body.retryAfterSeconds ?? 5;
 
     setState({ status: 'retrying', retryIn: segundos });
     await esperar(segundos * 1000);
     setState({ status: 'loading', retryIn: 0 });
 
-    response = await mockFetch(payload);
+    response = await postChat(payload);
     if (response.status === 429) {
       throw crearError('RATE_LIMIT', 'Limite de pedidos excedido');
     }
@@ -118,7 +97,6 @@ async function requestWithRetry(payload) {
 export async function sendMessage(text) {
   const limpio = text.trim();
 
-  // Nada de mensajes vacios: ni siquiera se arma el pedido
   if (!limpio) {
     return { ok: false, reason: 'EMPTY' };
   }
@@ -138,7 +116,7 @@ export async function sendMessage(text) {
     state.messages.push({
       role: 'assistant',
       content: respuesta,
-      truncated: stopReason === 'max_tokens',   // la respuesta quedo cortada
+      truncated: stopReason === 'max_tokens',
     });
     setState({ status: 'idle', lastUsage: usage });
     return { ok: true };

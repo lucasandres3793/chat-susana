@@ -1,6 +1,5 @@
-// System prompt de Susana de Musicardi.
-// PROVISORIO en el front: en L7 se muda a la funcion serverless,
-// para que nadie pueda modificarlo desde el navegador.
+// System prompt de Susana. Vive en el servidor: el navegador nunca lo recibe
+// ni puede reemplazarlo.
 
 export const SYSTEM_PROMPT = `
 Sos Susana de Musicardi, personaje de la película argentina "Esperando la carroza" (1985).

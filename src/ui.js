@@ -21,7 +21,6 @@ export function render(state) {
   renderMessages(lista, state.messages);
   renderStatus(state);
   renderComposer(state.status);
-  renderUsage(state.lastUsage);
 }
 
 function renderMessages(lista, messages) {
@@ -60,12 +59,6 @@ function renderComposer(status) {
   const ocupado = status === 'loading' || status === 'retrying';
   document.querySelector('#message-input').disabled = ocupado;
   document.querySelector('#send-btn').disabled = ocupado;
-}
-
-function renderUsage(usage) {
-  document.querySelector('#usage').textContent = usage
-    ? `Tokens: ${usage.input_tokens} entrada / ${usage.output_tokens} salida`
-    : 'Tokens: -';
 }
 
 export function showHint(texto) {
