@@ -1,12 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 
-// El modelo se configura por variable de entorno: cuando Google retire el
-// actual, se cambia en Vercel sin tocar una linea de codigo.
-const MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 
-// Topes de seguridad: no son gestion de contexto, son proteccion contra
-// un pedido armado a mano para quemar la cuota.
 const MAX_MENSAJES = 100;
 const MAX_CARACTERES = 2000;
 
@@ -61,10 +57,16 @@ export default async function handler(req, res) {
       })),
 
       config: {
-        // El personaje lo pone el servidor, no el navegador
         systemInstruction: SYSTEM_PROMPT,
-        temperature: 0.9,     // variedad sin salirse del personaje
-        maxOutputTokens: 300, // red de seguridad; el largo lo pide el prompt
+        temperature: 0.9,
+
+        // El razonamiento del modelo consume tokens de salida. Susana no
+        // necesita razonar, necesita voz: con el nivel bajo, los tokens
+        // van a la respuesta y no al pensamiento interno.
+        thinkingConfig: { thinkingLevel: 'low' },
+
+        // Red de seguridad con margen suficiente para que no corte
+        maxOutputTokens: 800,
       },
     });
 
@@ -89,7 +91,6 @@ export default async function handler(req, res) {
     });
 
   } catch (e) {
-    // Gemini corta por limite de uso: lo traducimos al 429 de nuestro contrato
     if (e?.status === 429) {
       return error(res, 429, 'rate_limit_error', 'Rate limit exceeded', {
         retryAfterSeconds: 5,
