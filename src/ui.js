@@ -1,11 +1,10 @@
-// Traduce el estado del motor a pantalla. Es la unica pieza que toca el DOM.
+// Traduce el estado del motor a pantalla. Unica pieza que toca el DOM del chat.
 
-// El motor habla en codigos; la UI decide como contarselo a una persona
 const MENSAJES_DE_ERROR = {
-  RATE_LIMIT: 'Susana está desbordada. Esperá un momento y volvé a intentar.',
-  EMPTY_RESPONSE: 'Susana no contestó nada. Probá de nuevo.',
-  HTTP: 'Hubo un problema con el servidor. Intentá otra vez.',
-  NETWORK: 'No se pudo conectar. Revisá tu conexión e intentá otra vez.',
+  RATE_LIMIT: 'Susana esta desbordada. Espera un momento y volve a intentar.',
+  EMPTY_RESPONSE: 'Susana no contesto nada. Proba de nuevo.',
+  HTTP: 'Hubo un problema con el servidor. Intenta otra vez.',
+  NETWORK: 'No se pudo conectar. Revisa tu conexion e intenta otra vez.',
 };
 
 export function getUserMessage(error) {
@@ -13,22 +12,27 @@ export function getUserMessage(error) {
 }
 
 export function render(state) {
-  renderMessages(state.messages);
+  const lista = document.querySelector('#messages');
+
+  // Guarda: el motor avisa siempre, pero si el usuario esta en Home o About
+  // no hay chat en pantalla que actualizar.
+  if (!lista) return;
+
+  renderMessages(lista, state.messages);
   renderStatus(state);
   renderComposer(state.status);
   renderUsage(state.lastUsage);
 }
 
-function renderMessages(messages) {
-  const lista = document.querySelector('#messages');
+function renderMessages(lista, messages) {
   lista.replaceChildren(...messages.map(crearMensaje));
-  lista.scrollTop = lista.scrollHeight;   // scroll automatico al ultimo mensaje
+  lista.scrollTop = lista.scrollHeight;   // scroll automatico al ultimo
 }
 
 function crearMensaje(message) {
   const item = document.createElement('li');
   item.className = `msg msg--${message.role}`;
-  // textContent: ningun texto, del usuario o del modelo, se interpreta como HTML
+  // textContent: ningun texto se interpreta como HTML
   item.textContent = message.truncated ? `${message.content}...` : message.content;
   return item;
 }
@@ -38,7 +42,7 @@ function renderStatus(state) {
   status.classList.remove('chat__status--error');
 
   if (state.status === 'loading') {
-    status.textContent = 'Susana está escribiendo...';
+    status.textContent = 'Susana esta escribiendo...';
   } else if (state.status === 'retrying') {
     status.textContent = `Demasiados mensajes seguidos. Reintento en ${state.retryIn} s...`;
   } else if (state.status === 'error') {
@@ -52,7 +56,6 @@ function renderStatus(state) {
   status.classList.remove('hidden');
 }
 
-// Bloqueo visual: mientras Susana contesta, no se puede escribir ni enviar
 function renderComposer(status) {
   const ocupado = status === 'loading' || status === 'retrying';
   document.querySelector('#message-input').disabled = ocupado;
@@ -67,6 +70,7 @@ function renderUsage(usage) {
 
 export function showHint(texto) {
   const status = document.querySelector('#status');
+  if (!status) return;
   status.textContent = texto;
   status.classList.remove('hidden');
 }

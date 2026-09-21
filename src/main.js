@@ -1,35 +1,19 @@
-import { sendMessage, subscribe, getState } from './engine/chatEngine.js';
-import { setMockMode } from './engine/mockApi.js';
-import { render, showHint } from './ui.js';
+import { router } from './router.js';
+import { setupLinkInterception } from './navigation.js';
+import { subscribe } from './engine/chatEngine.js';
+import { render } from './ui.js';
 
-// Cada cambio de estado del motor redibuja la pantalla
+// 1. El motor avisa cada cambio de estado. Se suscribe UNA sola vez, al arrancar.
+//    Si el chat no esta en pantalla, render() se da cuenta solo y no hace nada.
 subscribe(render);
-render(getState());
 
-const form = document.querySelector('#composer');
-const input = document.querySelector('#message-input');
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  const texto = input.value;
-  input.value = '';   // se limpia enseguida: el mensaje ya aparece en la lista
-
-  const resultado = await sendMessage(texto);
-
-  if (resultado.reason === 'EMPTY') {
-    showHint('Escribí algo antes de enviar.');
-  }
-
-  // Si fallo, se devuelve lo que habia escrito: no se pierde el mensaje
-  if (!resultado.ok) {
-    input.value = texto;
-  }
-
-  input.focus();
+// 2. Back/Forward: el navegador ya cambio la URL, solo hay que redibujar
+window.addEventListener('popstate', () => {
+  router();
 });
 
-// Panel de desarrollo: cambia el comportamiento del mock
-document.querySelector('#mock-mode').addEventListener('change', (event) => {
-  setMockMode(event.target.value);
-});
+// 3. Intercepcion de clics en links internos
+setupLinkInterception();
+
+// 4. Render inicial: dibuja la vista de la URL con la que entro el usuario
+router();
