@@ -1,10 +1,10 @@
-// Traduce el estado del motor a pantalla. Unica pieza que toca el DOM del chat.
+// Traduce el estado del motor a pantalla. Única pieza que toca el DOM del chat.
 
 const MENSAJES_DE_ERROR = {
-  RATE_LIMIT: 'Susana esta desbordada. Espera un momento y volve a intentar.',
-  EMPTY_RESPONSE: 'Susana no contesto nada. Proba de nuevo.',
-  HTTP: 'Hubo un problema con el servidor. Intenta otra vez.',
-  NETWORK: 'No se pudo conectar. Revisa tu conexion e intenta otra vez.',
+  RATE_LIMIT: 'Susana está desbordada. Esperá un momento y volvé a intentar.',
+  EMPTY_RESPONSE: 'Susana no contestó nada. Probá de nuevo.',
+  HTTP: 'Hubo un problema con el servidor. Intentá otra vez.',
+  NETWORK: 'No se pudo conectar. Revisá tu conexión e intentá otra vez.',
 };
 
 export function getUserMessage(error) {
@@ -14,7 +14,7 @@ export function getUserMessage(error) {
 export function render(state) {
   const lista = document.querySelector('#messages');
 
-  // Guarda: el motor avisa siempre, pero si el usuario esta en Home o About
+  // Guarda: el motor avisa siempre, pero si el usuario está en Home o About
   // no hay chat en pantalla que actualizar.
   if (!lista) return;
 
@@ -25,23 +25,24 @@ export function render(state) {
 
 function renderMessages(lista, messages) {
   lista.replaceChildren(...messages.map(crearMensaje));
-  lista.scrollTop = lista.scrollHeight;   // scroll automatico al ultimo
+  lista.scrollTop = lista.scrollHeight;   // scroll automático al último
 }
 
 function crearMensaje(message) {
   const item = document.createElement('li');
   item.className = `msg msg--${message.role}`;
-  // textContent: ningun texto se interpreta como HTML
+  // textContent: ningún texto se interpreta como HTML
   item.textContent = message.truncated ? `${message.content}...` : message.content;
   return item;
 }
 
 function renderStatus(state) {
   const status = document.querySelector('#status');
-  status.classList.remove('chat__status--error');
+  status.classList.remove('chat__status--error', 'chat__status--typing');
 
   if (state.status === 'loading') {
-    status.textContent = 'Susana esta escribiendo...';
+    status.textContent = 'Susana está escribiendo';
+    status.classList.add('chat__status--typing');   // los puntos los pone el CSS
   } else if (state.status === 'retrying') {
     status.textContent = `Demasiados mensajes seguidos. Reintento en ${state.retryIn} s...`;
   } else if (state.status === 'error') {
